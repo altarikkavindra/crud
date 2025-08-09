@@ -1,0 +1,58 @@
+name: Docker Build & Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: db_crud
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -psecret"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build PHP-FPM image
+        run: docker build -t simplecrud-php-fpm .
+
+      - name: Run PHP-FPM container
+        run: |
+          docker run -d --name php-fpm \
+            --network host \
+            -v ${{ github.workspace }}/public:/var/www/public \
+            -v ${{ github.workspace }}/app:/var/www/app \
+            simplecrud-php-fpm
+
+      - name: Run Nginx container
+        run: |
+          docker run -d --name nginx \
+            --network host \
+            -v ${{ github.workspace }}/public:/var/www/public \
+            -v ${{ github.workspace }}/app:/var/www/app \
+            -v ${{ github.workspace }}/docker/default.conf:/etc/nginx/conf.d/default.conf \
+            nginx:latest
+
+      - name: Wait for services to start
+        run: sleep 10
+
+      - name: Test Homepage
+        run: curl -s http://localhost:8080 | grep "CRUD Data Siswa"
