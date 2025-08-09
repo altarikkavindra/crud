@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../app/config/database.php';
-require_once __DIR__ . '/../app/controllers/studentController.php';
+require_once __DIR__ . '/../app/controllers/studentcontroller.php';
 
 $database = new Database();
 $db = $database->getConnection();
