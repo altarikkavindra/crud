@@ -44,3 +44,4 @@ jobs:
           cd /var/www
           git pull origin main
           docker-compose up -d --build
+          docker exec www_db_1 mysql -u root -psecret -e "use db_crud; insert into tb_siswa(nama, alamat, jenis_kelamin) values ('mileaadnan','Bandung','Perempuan');" db_crud
